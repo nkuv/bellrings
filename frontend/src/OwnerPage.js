@@ -96,7 +96,7 @@ function OwnerPage({ onLogout }) {
                 <tr key={order.order_id} style={{ background: idx % 2 === 0 ? '#fafafa' : '#fff' }}>
                   <td style={{ padding: 10 }}>{order.order_id}</td>
                   <td style={{ padding: 10 }}>{order.student_username || 'N/A'}</td>
-                  <td style={{ padding: 10 }}>{order.day || ''}</td>
+                  <td style={{ padding: 10 }}>{order.day ? new Date(order.day).toLocaleDateString() : ''}</td>
                   <td style={{ padding: 10 }}>
                     <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                       {order.items && order.items.length > 0 && order.items[0] !== null
