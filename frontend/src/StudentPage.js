@@ -81,49 +81,98 @@ function StudentPage({ onLogout }) {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto', padding: 24 }}>
-      <h2>Student Dashboard</h2>
-      <button onClick={onLogout} style={{ float: 'right' }}>Logout</button>
-      <h3>Menu</h3>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
-        <thead>
-          <tr>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Item</th>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {menuItems.map(item => (
-            <tr key={item.id}>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{item.name}</td>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{item.price}</td>
+    <div style={{
+      maxWidth: 700,
+      margin: '40px auto',
+      padding: 32,
+      background: '#f9f9f9',
+      borderRadius: 12,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
+    }}>
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24
+      }}>
+        <h2 style={{ margin: 0 }}>Student Dashboard</h2>
+        <button onClick={onLogout} style={{
+          background: '#e74c3c',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 6,
+          padding: '8px 16px',
+          cursor: 'pointer'
+        }}>Logout</button>
+      </header>
+
+      <section style={{ marginBottom: 32 }}>
+        <h3>Menu</h3>
+        {error && <div style={{ background: '#ffeaea', color: '#c0392b', padding: 10, borderRadius: 6, marginBottom: 12 }}>{error}</div>}
+        <table style={{
+          width: '100%',
+          borderCollapse: 'separate',
+          borderSpacing: 0,
+          background: '#fff',
+          borderRadius: 8,
+          overflow: 'hidden',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
+        }}>
+          <thead style={{ background: '#f1f1f1' }}>
+            <tr>
+              <th style={{ padding: 10, textAlign: 'left' }}>Item</th>
+              <th style={{ padding: 10, textAlign: 'left' }}>Price</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <h3>Place an Order</h3>
-      <form onSubmit={handleOrder} style={{ marginBottom: 16 }}>
-        <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} style={{ marginRight: 8 }}>
-          {menuItems.map(item => (
-            <option key={item.id} value={item.id}>{item.name}</option>
-          ))}
-        </select>
-        <input
-          type="number"
-          min={1}
-          value={quantity}
-          onChange={e => setQuantity(e.target.value)}
-          style={{ width: 60, marginRight: 8 }}
-        />
-        <button type="submit" disabled={loading || !selectedItem}>
-          {loading ? 'Placing...' : 'Order'}
+          </thead>
+          <tbody>
+            {menuItems.map((item, idx) => (
+              <tr key={item.id} style={{ background: idx % 2 === 0 ? '#fafafa' : '#fff' }}>
+                <td style={{ padding: 10 }}>{item.name}</td>
+                <td style={{ padding: 10 }}>₹{item.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
+        <h3>Place an Order</h3>
+        <form onSubmit={handleOrder} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} style={{ padding: 8, borderRadius: 6 }}>
+            {menuItems.map(item => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={e => setQuantity(e.target.value)}
+            style={{ width: 60, padding: 8, borderRadius: 6 }}
+          />
+          <button type="submit" disabled={loading || !selectedItem} style={{
+            background: '#3498db',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            padding: '8px 16px',
+            cursor: 'pointer'
+          }}>
+            {loading ? 'Placing...' : 'Order'}
+          </button>
+        </form>
+        <button onClick={handleQuickOrder} disabled={loading} style={{
+          background: '#2ecc71',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 6,
+          padding: '8px 16px',
+          cursor: 'pointer'
+        }}>
+          {loading ? 'Placing Quick Order...' : 'Quick Order (Most Frequent)'}
         </button>
-      </form>
-      <button onClick={handleQuickOrder} disabled={loading} style={{ marginBottom: 16 }}>
-        {loading ? 'Placing Quick Order...' : 'Quick Order (Most Frequent)'}
-      </button>
-      {orderMsg && <p style={{ color: 'green' }}>{orderMsg}</p>}
+        {orderMsg && <div style={{ background: '#eafaf1', color: '#27ae60', padding: 10, borderRadius: 6, marginTop: 12 }}>{orderMsg}</div>}
+      </section>
     </div>
   );
 }
