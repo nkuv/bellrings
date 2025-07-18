@@ -10,7 +10,9 @@ function OwnerPage({ onLogout }) {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch('/api/orders');
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().slice(0, 10);
+        const res = await fetch(`/api/orders?day=${today}`);
         const data = await res.json();
         if (res.ok) {
           setOrders(data);
@@ -29,7 +31,7 @@ function OwnerPage({ onLogout }) {
     <div style={{ maxWidth: 800, margin: '40px auto', padding: 24 }}>
       <h2>Owner Dashboard</h2>
       <button onClick={onLogout} style={{ float: 'right' }}>Logout</button>
-      <h3>All Orders</h3>
+      <h3>Orders Received Today</h3>
       {loading && <p>Loading orders...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && (
@@ -38,7 +40,7 @@ function OwnerPage({ onLogout }) {
             <tr>
               <th style={{ border: '1px solid #ccc', padding: 8 }}>Order ID</th>
               <th style={{ border: '1px solid #ccc', padding: 8 }}>Student</th>
-              <th style={{ border: '1px solid #ccc', padding: 8 }}>Created At</th>
+              <th style={{ border: '1px solid #ccc', padding: 8 }}>Day</th>
               <th style={{ border: '1px solid #ccc', padding: 8 }}>Items</th>
             </tr>
           </thead>
@@ -47,7 +49,7 @@ function OwnerPage({ onLogout }) {
               <tr key={order.id}>
                 <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.id}</td>
                 <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.student ? order.student.username : 'N/A'}</td>
-                <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}</td>
+                <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.day || ''}</td>
                 <td style={{ border: '1px solid #ccc', padding: 8 }}>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                     {order.MenuItems && order.MenuItems.length > 0 ? order.MenuItems.map(item => (
