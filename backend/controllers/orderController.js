@@ -40,6 +40,36 @@ exports.placeOrder = async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // 1. Get the menuItemId for 'meals'
+    const mealRes = await client.query('SELECT id FROM "MenuItems" WHERE name = $1', ['meals']);
+    if (mealRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'Meals item not found' });
+    }
+    const mealsId = mealRes.rows[0].id;
+
+    // 2. Calculate meals ordered today
+    const today = new Date().toISOString().slice(0, 10);
+    const mealsCountRes = await client.query(`
+      SELECT COALESCE(SUM(oi.quantity), 0) AS total
+      FROM "Orders" o
+      JOIN "OrderItems" oi ON oi.orderId = o.id
+      WHERE o.day = $1 AND oi.menuItemId = $2
+    `, [today, mealsId]);
+    const mealsOrderedToday = Number(mealsCountRes.rows[0].total);
+
+    // 3. Calculate meals in this order
+    const mealsInOrder = items
+      .filter(item => Number(item.menuItemId) === Number(mealsId))
+      .reduce((sum, item) => sum + Number(item.quantity), 0);
+
+    if (mealsOrderedToday + mealsInOrder > 200) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'Daily meal limit reached' });
+    }
+
+    // 4. Place the order as usual
     const orderResult = await client.query(
       'INSERT INTO "Orders" (studentId, day) VALUES ($1, CURRENT_DATE) RETURNING id',
       [studentId]
