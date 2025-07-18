@@ -119,4 +119,22 @@ exports.getMostFrequentItem = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+exports.getProfit = async (req, res) => {
+  const { day } = req.query;
+  if (!day) return res.status(400).json({ message: 'day required' });
+  try {
+    const result = await pool.query(`
+      SELECT COALESCE(SUM(oi.quantity * m.price), 0) AS profit
+      FROM "Orders" o
+      JOIN "OrderItems" oi ON oi.orderId = o.id
+      JOIN "MenuItems" m ON oi.menuItemId = m.id
+      WHERE o.day = $1
+    `, [day]);
+    res.json({ profit: Number(result.rows[0].profit) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

@@ -4,27 +4,35 @@ function OwnerPage({ onLogout }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [profit, setProfit] = useState(0);
 
   useEffect(() => {
-    async function fetchOrders() {
+    async function fetchOrdersAndProfit() {
       setLoading(true);
       setError('');
       try {
         // Get today's date in YYYY-MM-DD format
         const today = new Date().toISOString().slice(0, 10);
-        const res = await fetch(`/api/orders?day=${today}`);
-        const data = await res.json();
-        if (res.ok) {
-          setOrders(data);
+        const [ordersRes, profitRes] = await Promise.all([
+          fetch(`/api/orders?day=${today}`),
+          fetch(`/api/orders/profit?day=${today}`)
+        ]);
+        const ordersData = await ordersRes.json();
+        const profitData = await profitRes.json();
+        if (ordersRes.ok) {
+          setOrders(ordersData);
         } else {
-          setError(data.message || 'Failed to fetch orders');
+          setError(ordersData.message || 'Failed to fetch orders');
+        }
+        if (profitRes.ok) {
+          setProfit(profitData.profit || 0);
         }
       } catch (err) {
         setError('Network error');
       }
       setLoading(false);
     }
-    fetchOrders();
+    fetchOrdersAndProfit();
   }, []);
 
   return (
@@ -52,6 +60,9 @@ function OwnerPage({ onLogout }) {
           cursor: 'pointer'
         }}>Logout</button>
       </header>
+      <section style={{ marginBottom: 24 }}>
+        <h3 style={{ margin: 0 }}>Today's Profit: <span style={{ color: '#27ae60' }}>₹{profit}</span></h3>
+      </section>
       <section>
         <h3>Orders Received Today</h3>
         {loading && <p style={{ color: '#2980b9' }}>Loading orders...</p>}
