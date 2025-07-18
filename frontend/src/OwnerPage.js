@@ -6,34 +6,39 @@ function OwnerPage({ onLogout }) {
   const [error, setError] = useState('');
   const [profit, setProfit] = useState(0);
 
-  useEffect(() => {
-    async function fetchOrdersAndProfit() {
-      setLoading(true);
-      setError('');
-      try {
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().slice(0, 10);
-        const [ordersRes, profitRes] = await Promise.all([
-          fetch(`/api/orders?day=${today}`),
-          fetch(`/api/orders/profit?day=${today}`)
-        ]);
-        const ordersData = await ordersRes.json();
-        const profitData = await profitRes.json();
-        if (ordersRes.ok) {
-          setOrders(ordersData);
-        } else {
-          setError(ordersData.message || 'Failed to fetch orders');
-        }
-        if (profitRes.ok) {
-          setProfit(profitData.profit || 0);
-        }
-      } catch (err) {
-        setError('Network error');
+  const fetchOrdersAndProfit = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const [ordersRes, profitRes] = await Promise.all([
+        fetch(`/api/orders?day=${today}`),
+        fetch(`/api/orders/profit?day=${today}`)
+      ]);
+      const ordersData = await ordersRes.json();
+      const profitData = await profitRes.json();
+      if (ordersRes.ok) {
+        setOrders(ordersData);
+      } else {
+        setError(ordersData.message || 'Failed to fetch orders');
       }
-      setLoading(false);
+      if (profitRes.ok) {
+        setProfit(profitData.profit || 0);
+      }
+    } catch (err) {
+      setError('Network error');
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchOrdersAndProfit();
   }, []);
+
+  const handleServe = async (orderId) => {
+    await fetch(`/api/orders/serve/${orderId}`, { method: 'PATCH' });
+    fetchOrdersAndProfit();
+  };
 
   return (
     <div style={{
@@ -83,6 +88,7 @@ function OwnerPage({ onLogout }) {
                 <th style={{ padding: 10, textAlign: 'left' }}>Student</th>
                 <th style={{ padding: 10, textAlign: 'left' }}>Day</th>
                 <th style={{ padding: 10, textAlign: 'left' }}>Items</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -99,6 +105,25 @@ function OwnerPage({ onLogout }) {
                           ))
                         : 'No items'}
                     </ul>
+                  </td>
+                  <td style={{ padding: 10, textAlign: 'center' }}>
+                    {order.served ? (
+                      <span style={{ color: '#27ae60', fontWeight: 'bold', fontSize: 22 }} title="Served">&#10003;</span>
+                    ) : (
+                      <button
+                        style={{
+                          background: '#3498db',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '6px 12px',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => handleServe(order.order_id)}
+                      >
+                        Mark as Served
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

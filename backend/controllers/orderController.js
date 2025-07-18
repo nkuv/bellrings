@@ -7,6 +7,7 @@ exports.getOrders = async (req, res) => {
       SELECT
         o.id AS order_id,
         o.day,
+        o.served,
         COALESCE(u.username, 'N/A') AS student_username,
         json_agg(
           json_build_object(
@@ -24,7 +25,7 @@ exports.getOrders = async (req, res) => {
       query += ' WHERE o.day = $1';
       params.push(day);
     }
-    query += ' GROUP BY o.id, o.day, u.username ORDER BY o.id DESC';
+    query += ' GROUP BY o.id, o.day, o.served, u.username ORDER BY o.id DESC';
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
@@ -133,6 +134,17 @@ exports.getProfit = async (req, res) => {
       WHERE o.day = $1
     `, [day]);
     res.json({ profit: Number(result.rows[0].profit) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.markOrderServed = async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    await pool.query('UPDATE "Orders" SET served = TRUE WHERE id = $1', [orderId]);
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
