@@ -149,4 +149,14 @@ exports.markOrderServed = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+exports.getAllStudentDues = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, username, balance FROM "Users" WHERE role = $1 ORDER BY username', ['student']);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

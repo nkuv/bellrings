@@ -5,18 +5,21 @@ function OwnerPage({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [profit, setProfit] = useState(0);
+  const [dues, setDues] = useState([]);
 
   const fetchOrdersAndProfit = async () => {
     setLoading(true);
     setError('');
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const [ordersRes, profitRes] = await Promise.all([
+      const [ordersRes, profitRes, duesRes] = await Promise.all([
         fetch(`/api/orders?day=${today}`),
-        fetch(`/api/orders/profit?day=${today}`)
+        fetch(`/api/orders/profit?day=${today}`),
+        fetch(`/api/orders/dues`)
       ]);
       const ordersData = await ordersRes.json();
       const profitData = await profitRes.json();
+      const duesData = await duesRes.json();
       if (ordersRes.ok) {
         setOrders(ordersData);
       } else {
@@ -24,6 +27,9 @@ function OwnerPage({ onLogout }) {
       }
       if (profitRes.ok) {
         setProfit(profitData.profit || 0);
+      }
+      if (duesRes.ok) {
+        setDues(duesData);
       }
     } catch (err) {
       setError('Network error');
@@ -67,6 +73,34 @@ function OwnerPage({ onLogout }) {
       </header>
       <section style={{ marginBottom: 24 }}>
         <h3 style={{ margin: 0 }}>Today's Profit: <span style={{ color: '#27ae60' }}>₹{profit}</span></h3>
+      </section>
+      <section style={{ marginBottom: 32 }}>
+        <h3>All Student Dues</h3>
+        <table style={{
+          width: '100%',
+          borderCollapse: 'separate',
+          borderSpacing: 0,
+          background: '#fff',
+          borderRadius: 8,
+          overflow: 'hidden',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          marginBottom: 16
+        }}>
+          <thead style={{ background: '#f1f1f1' }}>
+            <tr>
+              <th style={{ padding: 10, textAlign: 'left' }}>Student</th>
+              <th style={{ padding: 10, textAlign: 'left' }}>Balance Due (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dues.map((student, idx) => (
+              <tr key={student.id} style={{ background: idx % 2 === 0 ? '#fafafa' : '#fff' }}>
+                <td style={{ padding: 10 }}>{student.username}</td>
+                <td style={{ padding: 10 }}>{student.balance}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
       <section>
         <h3>Orders Received Today</h3>
