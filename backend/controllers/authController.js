@@ -19,17 +19,16 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login
+// Student login
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    const result = await pool.query('SELECT * FROM "Users" WHERE username = $1', [username]);
+    const result = await pool.query('SELECT * FROM "Users" WHERE username = $1 AND role = $2', [username, 'student']);
     const user = result.rows[0];
     if (!user || user.password !== password) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
-    // For demo, just return user info (no JWT)
-    res.json({ id: user.id, username: user.username, role: user.role });
+    res.json({ id: user.id, username: user.username, balance: user.balance });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

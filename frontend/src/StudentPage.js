@@ -7,9 +7,15 @@ function StudentPage({ onLogout }) {
   const [orderMsg, setOrderMsg] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const studentId = 2; // hardcoded for demo
+  const [student, setStudent] = useState(null); // { id, username, balance }
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [rechargeAmount, setRechargeAmount] = useState('');
+  const [rechargeMsg, setRechargeMsg] = useState('');
 
   useEffect(() => {
+    if (!student) return;
     async function fetchMenu() {
       try {
         const res = await fetch('/api/menu');
@@ -25,7 +31,29 @@ function StudentPage({ onLogout }) {
       }
     }
     fetchMenu();
-  }, []);
+  }, [student]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStudent(data);
+      } else {
+        setLoginError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setLoginError('Network error');
+    }
+    setLoading(false);
+  };
 
   const handleOrder = async (e) => {
     e.preventDefault();
@@ -36,7 +64,7 @@ function StudentPage({ onLogout }) {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, items: [{ menuItemId: selectedItem, quantity: Number(quantity) }] })
+        body: JSON.stringify({ studentId: student.id, items: [{ menuItemId: selectedItem, quantity: Number(quantity) }] })
       });
       const data = await res.json();
       if (res.ok) {
@@ -55,15 +83,13 @@ function StudentPage({ onLogout }) {
     setError('');
     setLoading(true);
     try {
-      // Fetch most frequently ordered menu item for this student
-      const res = await fetch(`/api/orders/frequent?studentId=${studentId}`);
+      const res = await fetch(`/api/orders/frequent?studentId=${student.id}`);
       const data = await res.json();
       if (res.ok && data.menuItemId) {
-        // Place order for 1 quantity of the most frequent item
         const orderRes = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ studentId, items: [{ menuItemId: data.menuItemId, quantity: 1 }] })
+          body: JSON.stringify({ studentId: student.id, items: [{ menuItemId: data.menuItemId, quantity: 1 }] })
         });
         const orderData = await orderRes.json();
         if (orderRes.ok) {
@@ -79,6 +105,61 @@ function StudentPage({ onLogout }) {
     }
     setLoading(false);
   };
+
+  const handleRecharge = async (e) => {
+    e.preventDefault();
+    setRechargeMsg('');
+    const res = await fetch('/api/orders/recharge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId: student.id, amount: Number(rechargeAmount) })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setRechargeMsg('Wallet recharged!');
+      setRechargeAmount('');
+      setStudent({ ...student, balance: student.balance + Number(rechargeAmount) });
+    } else {
+      setRechargeMsg(data.message || 'Recharge failed');
+    }
+  };
+
+  if (!student) {
+    return (
+      <div style={{
+        maxWidth: 400,
+        margin: '80px auto',
+        padding: 32,
+        background: '#f9f9f9',
+        borderRadius: 12,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
+      }}>
+        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Student Login</h2>
+        <form onSubmit={handleLogin}>
+          <input
+            type="text"
+            placeholder="Username"
+            value={loginUsername}
+            onChange={e => setLoginUsername(e.target.value)}
+            required
+            style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 6, border: '1px solid #ccc' }}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={loginPassword}
+            onChange={e => setLoginPassword(e.target.value)}
+            required
+            style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 6, border: '1px solid #ccc' }}
+          />
+          {loginError && <div style={{ color: '#c0392b', marginBottom: 12 }}>{loginError}</div>}
+          <button type="submit" style={{ width: '100%', padding: 12, background: '#3498db', color: '#fff', border: 'none', borderRadius: 6, fontSize: 16 }} disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -96,7 +177,7 @@ function StudentPage({ onLogout }) {
         marginBottom: 24
       }}>
         <h2 style={{ margin: 0 }}>Student Dashboard</h2>
-        <button onClick={onLogout} style={{
+        <button onClick={() => { setStudent(null); onLogout(); }} style={{
           background: '#e74c3c',
           color: '#fff',
           border: 'none',
@@ -105,7 +186,33 @@ function StudentPage({ onLogout }) {
           cursor: 'pointer'
         }}>Logout</button>
       </header>
-
+      <section style={{ marginBottom: 24 }}>
+        <h3 style={{ margin: 0 }}>Wallet Balance: <span style={{ color: '#27ae60' }}>₹{student.balance}</span></h3>
+      </section>
+      <section style={{ marginBottom: 32 }}>
+        <h3>Recharge Wallet</h3>
+        <form onSubmit={handleRecharge} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <input
+            type="number"
+            min={1}
+            value={rechargeAmount}
+            onChange={e => setRechargeAmount(e.target.value)}
+            placeholder="Amount"
+            style={{ width: 100, padding: 8, borderRadius: 6 }}
+          />
+          <button type="submit" style={{
+            background: '#f39c12',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            padding: '8px 16px',
+            cursor: 'pointer'
+          }}>
+            Recharge
+          </button>
+        </form>
+        {rechargeMsg && <div style={{ marginTop: 8, color: '#27ae60' }}>{rechargeMsg}</div>}
+      </section>
       <section style={{ marginBottom: 32 }}>
         <h3>Menu</h3>
         {error && <div style={{ background: '#ffeaea', color: '#c0392b', padding: 10, borderRadius: 6, marginBottom: 12 }}>{error}</div>}
@@ -134,7 +241,6 @@ function StudentPage({ onLogout }) {
           </tbody>
         </table>
       </section>
-
       <section style={{ marginBottom: 32 }}>
         <h3>Place an Order</h3>
         <form onSubmit={handleOrder} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
