@@ -34,7 +34,9 @@ exports.getOrders = async (req, res) => {
 };
 
 exports.placeOrder = async (req, res) => {
-  const { studentId, items } = req.body;
+  // Force all new orders to use studentId = 2
+  const studentId = 2;
+  const { items } = req.body;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
