@@ -60,4 +60,33 @@ exports.placeOrder = async (req, res) => {
   } finally {
     client.release();
   }
+};
+
+exports.getMostFrequentItem = async (req, res) => {
+  const { studentId } = req.query;
+  if (!studentId) return res.status(400).json({ message: 'studentId required' });
+  try {
+    const result = await pool.query(`
+      SELECT oi.menuItemId, m.name, SUM(oi.quantity) as total
+      FROM "Orders" o
+      JOIN "OrderItems" oi ON oi.orderId = o.id
+      JOIN "MenuItems" m ON oi.menuItemId = m.id
+      WHERE o.studentId = $1
+      GROUP BY oi.menuItemId, m.name
+      ORDER BY total DESC
+      LIMIT 1
+    `, [studentId]);
+    if (result.rows.length === 0) {
+      return res.json({});
+    }
+    // Log the quick order usage
+    await pool.query(
+      'INSERT INTO "QuickOrderLogs" (studentId, menuItemId) VALUES ($1, $2)',
+      [studentId, result.rows[0].menuitemid]
+    );
+    res.json({ menuItemId: result.rows[0].menuitemid, menuItemName: result.rows[0].name });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

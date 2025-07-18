@@ -7,6 +7,7 @@ function StudentPage({ onLogout }) {
   const [orderMsg, setOrderMsg] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const studentId = 2; // hardcoded for demo
 
   useEffect(() => {
     async function fetchMenu() {
@@ -32,17 +33,46 @@ function StudentPage({ onLogout }) {
     setError('');
     setLoading(true);
     try {
-      // For demo, use studentId = 1 (adjust as needed)
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId: 1, items: [{ menuItemId: selectedItem, quantity: Number(quantity) }] })
+        body: JSON.stringify({ studentId, items: [{ menuItemId: selectedItem, quantity: Number(quantity) }] })
       });
       const data = await res.json();
       if (res.ok) {
         setOrderMsg('Order placed successfully!');
       } else {
         setError(data.message || 'Order failed');
+      }
+    } catch (err) {
+      setError('Network error');
+    }
+    setLoading(false);
+  };
+
+  const handleQuickOrder = async () => {
+    setOrderMsg('');
+    setError('');
+    setLoading(true);
+    try {
+      // Fetch most frequently ordered menu item for this student
+      const res = await fetch(`/api/orders/frequent?studentId=${studentId}`);
+      const data = await res.json();
+      if (res.ok && data.menuItemId) {
+        // Place order for 1 quantity of the most frequent item
+        const orderRes = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId, items: [{ menuItemId: data.menuItemId, quantity: 1 }] })
+        });
+        const orderData = await orderRes.json();
+        if (orderRes.ok) {
+          setOrderMsg(`Quick order placed for ${data.menuItemName}!`);
+        } else {
+          setError(orderData.message || 'Quick order failed');
+        }
+      } else {
+        setError('No frequent order found for you yet.');
       }
     } catch (err) {
       setError('Network error');
@@ -90,6 +120,9 @@ function StudentPage({ onLogout }) {
           {loading ? 'Placing...' : 'Order'}
         </button>
       </form>
+      <button onClick={handleQuickOrder} disabled={loading} style={{ marginBottom: 16 }}>
+        {loading ? 'Placing Quick Order...' : 'Quick Order (Most Frequent)'}
+      </button>
       {orderMsg && <p style={{ color: 'green' }}>{orderMsg}</p>}
     </div>
   );
