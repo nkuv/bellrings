@@ -46,15 +46,17 @@ function OwnerPage({ onLogout }) {
           </thead>
           <tbody>
             {orders.map(order => (
-              <tr key={order.id}>
-                <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.id}</td>
-                <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.student ? order.student.username : 'N/A'}</td>
+              <tr key={order.order_id}>
+                <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.order_id}</td>
+                <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.student_username || 'N/A'}</td>
                 <td style={{ border: '1px solid #ccc', padding: 8 }}>{order.day || ''}</td>
                 <td style={{ border: '1px solid #ccc', padding: 8 }}>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                    {order.MenuItems && order.MenuItems.length > 0 ? order.MenuItems.map(item => (
-                      <li key={item.id}>{item.name} x {item.OrderItem.quantity}</li>
-                    )) : 'No items'}
+                    {order.items && order.items.length > 0 && order.items[0] !== null
+                      ? order.items.map((item, idx) => (
+                          <li key={idx}>{item.name} x {item.quantity}</li>
+                        ))
+                      : 'No items'}
                   </ul>
                 </td>
               </tr>

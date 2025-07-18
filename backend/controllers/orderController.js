@@ -3,19 +3,29 @@ const pool = require('../db');
 exports.getOrders = async (req, res) => {
   try {
     const { day } = req.query;
-    let ordersQuery = `SELECT o.id, o.day, u.username as student, 
-      json_agg(json_build_object('name', m.name, 'quantity', oi.quantity)) as items
+    let query = `
+      SELECT
+        o.id AS order_id,
+        o.day,
+        COALESCE(u.username, 'N/A') AS student_username,
+        json_agg(
+          json_build_object(
+            'name', m.name,
+            'quantity', oi.quantity
+          )
+        ) FILTER (WHERE m.id IS NOT NULL) AS items
       FROM "Orders" o
-      JOIN "Users" u ON o.studentId = u.id
-      JOIN "OrderItems" oi ON oi.orderId = o.id
-      JOIN "MenuItems" m ON oi.menuItemId = m.id`;
+      LEFT JOIN "Users" u ON o.studentId = u.id
+      LEFT JOIN "OrderItems" oi ON oi.orderId = o.id
+      LEFT JOIN "MenuItems" m ON oi.menuItemId = m.id
+    `;
     const params = [];
     if (day) {
-      ordersQuery += ' WHERE o.day = $1';
+      query += ' WHERE o.day = $1';
       params.push(day);
     }
-    ordersQuery += ' GROUP BY o.id, o.day, u.username ORDER BY o.id DESC';
-    const result = await pool.query(ordersQuery, params);
+    query += ' GROUP BY o.id, o.day, u.username ORDER BY o.id DESC';
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
