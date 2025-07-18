@@ -1,14 +1,11 @@
-const mongoose = require('mongoose');
+module.exports = (sequelize, DataTypes) => {
+  const Order = sequelize.define('Order', {
+    createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+  });
 
-const orderItemSchema = new mongoose.Schema({
-  menuItem: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem', required: true },
-  quantity: { type: Number, required: true }
-});
+  const OrderItem = sequelize.define('OrderItem', {
+    quantity: { type: DataTypes.INTEGER, allowNull: false }
+  });
 
-const orderSchema = new mongoose.Schema({
-  student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  items: [orderItemSchema],
-  createdAt: { type: Date, default: Date.now }
-});
-
-module.exports = mongoose.model('Order', orderSchema); 
+  return { Order, OrderItem };
+}; 
