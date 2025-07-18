@@ -1,23 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import OwnerPage from './OwnerPage';
+import StudentPage from './StudentPage';
 
 function App() {
+  const [role, setRole] = useState(null);
+
+  if (role === 'owner') {
+    return <OwnerPage onLogout={() => setRole(null)} />;
+  }
+  if (role === 'student') {
+    return <StudentPage onLogout={() => setRole(null)} />;
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div style={{ maxWidth: 400, margin: '40px auto', padding: 24, border: '1px solid #ccc', borderRadius: 8 }}>
+      <h2>Choose Portal</h2>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button style={{ flex: 1, padding: 10 }} onClick={() => setRole('owner')}>
+          Owner Portal
+        </button>
+        <button style={{ flex: 1, padding: 10 }} onClick={() => setRole('student')}>
+          Student Portal
+        </button>
+      </div>
     </div>
   );
 }
